@@ -3,7 +3,7 @@
 #
 # VARS
 #
-
+upgrade="False"
 
 
 #
@@ -17,18 +17,16 @@ function usage(){
     Use the \$GOPATH environment variable to manage the go packages
 
     [command]
-    gopkg [options]
+    gopkg [arguments] [options]
 
-    [options]
-    -l | --list       List the installed packages
-    -i | --install    Install the given package in \$GOPATH
-    -d | --delete     Uninstall the given package in \$GOPATH
-    -u | --update     Update the given package in \$GOPATH
+    [arguments]
+    --list          List the installed packages
+    --install       Install the given package in \$GOPATH, or upgrade if already exists.
+    --uninstall     Uninstall the given package in \$GOPATH
 "
 }
 
 function list() {
-    except=( "cache" )
     pkgs_root="${GOPATH}/pkg/mod"
     pkgs=$(find "${GOPATH}/pkg/mod" -type f -name "go.mod")
     for pkg in ${pkgs[*]}; do
@@ -38,12 +36,9 @@ function list() {
 }
 
 function install() {
-    go get "$1"
-}
-
-
-function update() {
     go get -u "$1"
+    go mod tidy
+    go mod verify
 }
 
 function delete() {
@@ -79,20 +74,16 @@ while [[ $# -gt 0 ]]; do
         usage
         exit 0
         ;;
-    -l | --list)
+    --list)
         list
         shift 1
         ;;
-    -i | --install)
-        update "$2"
+    --install)
+        install "$2"
         shift 2
         ;;
-    -d | --delete)
+    --uninstall)
         delete "$2"
-        shift 2
-        ;;
-    -u | --update)
-        update "$2"
         shift 2
         ;;
     *) # unknown option
